@@ -1,0 +1,1165 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Feliz Aniversário, Pai!</title>
+    <!-- Tailwind CSS para utilitários responsivos e layout -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts para tipografia elegante e manuscrita -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&family=Inter:wght@300;400;600;700&family=Playfair+Display:ital,wght@0,600;0,700;1,600&display=swap" rel="stylesheet">
+    
+    <style>
+        /* Estilos base e fundo preto profundo */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            background-color: #000000;
+            color: #ffffff;
+            font-family: 'Inter', sans-serif;
+            overflow: hidden; /* Evita rolagem acidental durante a animação */
+            user-select: none;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        /* Canvas de estrelas e confetes em tela cheia */
+        #bg-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+
+        /* Palco principal onde o bolo e o balão acontecem */
+        #stage {
+            position: relative;
+            width: 100%;
+            height: 100dvh;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        /* Título sutil no topo */
+        .header-title {
+            position: absolute;
+            top: max(14px, 2.5vh);
+            left: 0;
+            right: 0;
+            text-align: center;
+            z-index: 20;
+            pointer-events: none;
+            opacity: 0;
+            transform: translateY(-10px);
+            transition: opacity 1.2s ease, transform 1.2s ease;
+        }
+
+        .header-title.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .font-script {
+            font-family: 'Great Vibes', cursive;
+        }
+
+        .font-serif-display {
+            font-family: 'Playfair Display', serif;
+        }
+
+        /* Container das peças de foto que formam o bolo */
+        #cake-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        /* Palco do Morphing Cinematográfico: foto grande passando e se esculpindo em bolo */
+        #morph-viewport {
+            position: absolute;
+            left: 50%;
+            top: 63%;
+            transform: translate(-50%, -50%);
+            width: min(84vw, 350px);
+            height: min(44vh, 330px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 20;
+            pointer-events: none;
+        }
+
+        /* Cada foto grande que passa na animação e vai perdendo suas pontas até virar bolo */
+        .morph-photo-frame {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            box-shadow: 0 18px 45px rgba(0, 0, 0, 0.9), 0 0 24px rgba(255, 255, 255, 0.22);
+            background-color: #111113;
+            will-change: transform, opacity, clip-path, border-radius;
+        }
+
+        .morph-photo-frame img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        /* Contorno brilhante que aparece quando a foto já assumiu a silhueta do bolo */
+        .cake-silhouette-glow {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.8s ease;
+            box-shadow: inset 0 0 0 2px rgba(255, 255, 255, 0.75);
+        }
+
+        /* Cobertura branca elegante que reveste o bolo assim que ele é formado */
+        .white-cake-frosting {
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, #ffffff 0%, #f8fafc 45%, #e2e8f0 100%);
+            opacity: 0;
+            transition: opacity 0.9s ease;
+            pointer-events: none;
+        }
+
+        .white-cake-frosting.visible {
+            opacity: 1;
+        }
+
+        /* Palco orbital para as fotos girando em volta do bolo branco */
+        #orbit-container {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 30;
+            opacity: 0;
+            transition: opacity 0.9s ease;
+        }
+
+        #orbit-container.visible {
+            opacity: 1;
+        }
+
+        .orbit-photo-item {
+            position: absolute;
+            width: 102px;
+            height: 102px;
+            border-radius: 14px;
+            overflow: hidden;
+            border: 3px solid #ffffff;
+            box-shadow: 0 10px 26px rgba(0, 0, 0, 0.88), 0 0 16px rgba(255, 255, 255, 0.45);
+            background: #18181b;
+            pointer-events: auto;
+            cursor: pointer;
+            will-change: transform, z-index, opacity;
+        }
+
+        .orbit-photo-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        @media (max-width: 480px) {
+            .orbit-photo-item {
+                width: 82px;
+                height: 82px;
+                border-radius: 12px;
+            }
+        }
+
+        /* Divisórias delicadas de glacê entre os 3 andares do bolo final */
+        .cake-tier-lines {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 1s ease;
+        }
+
+        .cake-tier-lines.visible {
+            opacity: 1;
+        }
+
+        /* Prato do bolo brilhante */
+        #cake-plate {
+            position: absolute;
+            height: 8px;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.9), #fde68a, rgba(255, 255, 255, 0.9), transparent);
+            border-radius: 999px;
+            box-shadow: 0 4px 18px rgba(255, 255, 255, 0.4);
+            opacity: 0;
+            transform: scaleX(0.2);
+            transition: opacity 1s ease, transform 1.2s cubic-bezier(0.22, 1, 0.36, 1);
+            z-index: 22;
+        }
+
+        #cake-plate.visible {
+            opacity: 1;
+            transform: scaleX(1);
+        }
+
+        /* Vela de aniversário no topo do bolo */
+        #candle-wrapper {
+            position: absolute;
+            display: flex;
+            flex-direction: row;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 14px;
+            opacity: 0;
+            transform: translateY(-20px) scale(0.7);
+            transition: opacity 0.8s ease, transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+            z-index: 25;
+            pointer-events: none;
+        }
+
+        #candle-wrapper.visible {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+        .candle-unit {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Chama da vela com animação realista */
+        .flame-glow {
+            position: absolute;
+            top: -18px;
+            width: 38px;
+            height: 38px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 200, 50, 0.65) 0%, rgba(255, 120, 0, 0.2) 50%, transparent 75%);
+            animation: pulseGlow 1.5s infinite alternate ease-in-out;
+        }
+
+        .flame {
+            width: 12px;
+            height: 21px;
+            background: radial-gradient(ellipse at bottom, #ffffff 10%, #fde047 45%, #f97316 85%, transparent 100%);
+            border-radius: 50% 50% 35% 35% / 65% 65% 35% 35%;
+            box-shadow: 0 0 12px #fbbf24, 0 0 24px #f59e0b;
+            transform-origin: bottom center;
+            animation: flicker 0.18s infinite alternate ease-in-out;
+            position: relative;
+            z-index: 2;
+        }
+
+        .wick {
+            width: 2px;
+            height: 5px;
+            background: #451a03;
+            margin-top: -2px;
+        }
+
+        .candle-body {
+            width: 12px;
+            height: 34px;
+            border-radius: 3px;
+            background: repeating-linear-gradient(
+                -45deg,
+                #fffbeb,
+                #fffbeb 5px,
+                #f59e0b 5px,
+                #f59e0b 10px
+            );
+            box-shadow: inset -3px 0 5px rgba(0, 0, 0, 0.25), 0 2px 6px rgba(0,0,0,0.6);
+        }
+
+        .candle-unit.side .candle-body {
+            height: 28px;
+            width: 11px;
+        }
+
+        #candle-wrapper.visible {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+        /* Chama da vela com animação realista */
+        .flame-glow {
+            position: absolute;
+            top: -22px;
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(255, 200, 50, 0.65) 0%, rgba(255, 120, 0, 0.2) 50%, transparent 75%);
+            animation: pulseGlow 1.5s infinite alternate ease-in-out;
+        }
+
+        .flame {
+            width: 14px;
+            height: 24px;
+            background: radial-gradient(ellipse at bottom, #ffffff 10%, #fde047 45%, #f97316 85%, transparent 100%);
+            border-radius: 50% 50% 35% 35% / 65% 65% 35% 35%;
+            box-shadow: 0 0 12px #fbbf24, 0 0 24px #f59e0b;
+            transform-origin: bottom center;
+            animation: flicker 0.18s infinite alternate ease-in-out;
+            position: relative;
+            z-index: 2;
+        }
+
+        .wick {
+            width: 2px;
+            height: 6px;
+            background: #451a03;
+            margin-top: -2px;
+        }
+
+        .candle-body {
+            width: 14px;
+            height: 36px;
+            border-radius: 3px;
+            background: repeating-linear-gradient(
+                -45deg,
+                #fffbeb,
+                #fffbeb 5px,
+                #f59e0b 5px,
+                #f59e0b 10px
+            );
+            box-shadow: inset -3px 0 5px rgba(0, 0, 0, 0.25), 0 2px 6px rgba(0,0,0,0.6);
+        }
+
+        @keyframes flicker {
+            0% { transform: scale(1) rotate(-2deg); }
+            50% { transform: scale(1.06, 0.96) rotate(1.5deg); }
+            100% { transform: scale(0.96, 1.05) rotate(-1deg); }
+        }
+
+        @keyframes pulseGlow {
+            0% { transform: scale(0.9); opacity: 0.75; }
+            100% { transform: scale(1.25); opacity: 1; }
+        }
+
+        /* Balão Branco Simples, Compacto e Elegante posicionado sem cobrir o bolo */
+        #balloon-stage {
+            position: fixed;
+            left: 50%;
+            top: 23%;
+            transform: translate(-50%, 95vh);
+            z-index: 40;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 88%;
+            max-width: 340px;
+            opacity: 0;
+            pointer-events: none;
+            transition: transform 2.2s cubic-bezier(0.16, 1, 0.3, 1), opacity 1.1s ease;
+        }
+
+        #balloon-stage.rise {
+            transform: translate(-50%, -50%);
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        /* Animação contínua de flutuação suave quando o balão chega na posição */
+        .balloon-bob {
+            animation: floatBalloon 3.8s ease-in-out infinite;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+
+        @keyframes floatBalloon {
+            0%, 100% { transform: translateY(0px) rotate(-0.8deg); }
+            50% { transform: translateY(-7px) rotate(0.8deg); }
+        }
+
+        /* Corpo do balão branco minimalista com brilho perolado suave */
+        .white-balloon {
+            position: relative;
+            width: 100%;
+            padding: 16px 20px 18px;
+            border-radius: 50% 50% 48% 48% / 44% 44% 56% 56%;
+            background: radial-gradient(circle at 28% 22%, #ffffff 0%, #f8fafc 45%, #e2e8f0 85%, #cbd5e1 100%);
+            border: 1.5px solid #ffffff;
+            box-shadow: 
+                0 14px 35px rgba(0, 0, 0, 0.75),
+                0 0 25px rgba(255, 255, 255, 0.35),
+                inset -6px -8px 16px rgba(148, 163, 184, 0.35),
+                inset 5px 6px 12px rgba(255, 255, 255, 0.95);
+            text-align: center;
+        }
+
+        /* Reflexo de luz delicado no balão branco */
+        .white-balloon::before {
+            content: '';
+            position: absolute;
+            top: 11%;
+            left: 16%;
+            width: 20%;
+            height: 11%;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.9);
+            transform: rotate(-28deg);
+            pointer-events: none;
+        }
+
+        /* Nó do balão branco */
+        .balloon-knot {
+            width: 14px;
+            height: 9px;
+            background: linear-gradient(180deg, #e2e8f0, #94a3b8);
+            clip-path: polygon(22% 0%, 78% 0%, 100% 100%, 0% 100%);
+            margin-top: -1px;
+        }
+
+        /* Fio fino e delicado do balão */
+        .balloon-string {
+            width: 20px;
+            height: 44px;
+            margin-top: -1px;
+            overflow: visible;
+        }
+
+        .balloon-string path {
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.75);
+            stroke-width: 1.3;
+            stroke-linecap: round;
+            animation: swayString 3s ease-in-out infinite alternate;
+        }
+
+        @keyframes swayString {
+            0% { d: path("M10,0 Q15,15 8,30 T11,44"); }
+            100% { d: path("M10,0 Q5,15 12,30 T8,44"); }
+        }
+
+        /* Ajustes responsivos para telas de celular */
+        @media (max-width: 480px) {
+            #balloon-stage {
+                top: 24%;
+                width: 90%;
+                max-width: 310px;
+            }
+            .white-balloon {
+                padding: 15px 18px 16px;
+                border-radius: 46% 46% 44% 44% / 40% 40% 52% 52%;
+            }
+        }
+
+        /* Barra de controles discretos na parte inferior */
+        .controls-bar {
+            position: fixed;
+            bottom: max(14px, 2.5vh);
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 50;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 6px 12px;
+            border-radius: 999px;
+            background: rgba(18, 18, 22, 0.72);
+            border: 1px solid rgba(255, 255, 255, 0.16);
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+            white-space: nowrap;
+        }
+
+        .ctrl-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 7px 13px;
+            border-radius: 999px;
+            font-size: 12.5px;
+            font-weight: 500;
+            color: #f4f4f5;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .ctrl-btn:hover, .ctrl-btn:active {
+            background: rgba(251, 191, 36, 0.22);
+            border-color: rgba(251, 191, 36, 0.6);
+            color: #fde68a;
+            transform: translateY(-1px);
+        }
+
+        /* Modal leve para ampliar foto ao clicar nela no bolo */
+        #photo-modal {
+            position: fixed;
+            inset: 0;
+            z-index: 80;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(6px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        #photo-modal.open {
+            display: flex;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Canvas de estrelas cintilantes no fundo preto e confetes dourados -->
+    <canvas id="bg-canvas"></canvas>
+
+    <!-- Palco principal -->
+    <main id="stage">
+        <!-- Título discreto no topo -->
+        <header id="header-title" class="header-title px-4">
+            <h1 class="font-script text-2xl sm:text-4xl text-white/90 drop-shadow-[0_2px_10px_rgba(255,255,255,0.3)]">
+                Para o Melhor Pai do Mundo
+            </h1>
+        </header>
+
+        <!-- Palco central onde as fotos grandes passam e se moldam no bolo -->
+        <div id="morph-viewport" aria-label="Bolo de aniversário formado por fotos"></div>
+
+        <!-- Fotos orbitando suavemente em volta do bolo branco -->
+        <div id="orbit-container" aria-hidden="true"></div>
+
+        <!-- Prato iluminado na base do bolo -->
+        <div id="cake-plate"></div>
+
+        <!-- Vela acesa no topo do bolo -->
+        <div id="candle-wrapper" aria-hidden="true">
+            <div class="candle-unit side">
+                <div class="flame-glow"></div>
+                <div class="flame" style="animation-delay: 0.06s;"></div>
+                <div class="wick"></div>
+                <div class="candle-body"></div>
+            </div>
+            <div class="candle-unit">
+                <div class="flame-glow"></div>
+                <div class="flame"></div>
+                <div class="wick"></div>
+                <div class="candle-body"></div>
+            </div>
+            <div class="candle-unit side">
+                <div class="flame-glow"></div>
+                <div class="flame" style="animation-delay: 0.12s;"></div>
+                <div class="wick"></div>
+                <div class="candle-body"></div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Balão Branco Simples e Compacto com a mensagem -->
+    <section id="balloon-stage" aria-label="Mensagem de aniversário no balão branco">
+        <div class="balloon-bob">
+            <div class="white-balloon">
+                <div class="font-script text-2xl sm:text-3xl text-slate-900 leading-none mb-1.5">
+                    Feliz Aniversário, Pai!
+                </div>
+                <p class="text-[11px] sm:text-xs leading-snug text-slate-700 font-medium px-1">
+                    feliz aniversario pai você é o melhor pai de todos muito obrigado por tudo e por sempre estar ao meu lado sempre, eu sou a pessoa mais feliz do mundo por te ter como meu pai feliz aniversário
+                </p>
+            </div>
+            <div class="balloon-knot"></div>
+            <svg class="balloon-string" viewBox="0 0 20 44">
+                <path d="M10,0 Q15,15 8,30 T11,44" />
+            </svg>
+        </div>
+    </section>
+
+    <!-- Barra inferior discreta para personalizar fotos ou repetir animação -->
+    <nav class="controls-bar" aria-label="Controles da homenagem">
+        <label for="photo-upload" class="ctrl-btn" title="Escolher fotos da galeria">
+            <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+            <span id="upload-label">Minhas Fotos</span>
+        </label>
+        <input type="file" id="photo-upload" accept="image/*" multiple class="hidden">
+
+        <button id="btn-replay" type="button" class="ctrl-btn" title="Repetir animação">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+            <span>Repetir</span>
+        </button>
+
+        <button id="btn-toggle-balloon" type="button" class="ctrl-btn" title="Mostrar ou ocultar balão">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2a7 7 0 0 0-7 7c0 4.5 5 8 7 10 2-2 7-5.5 7-10a7 7 0 0 0-7-7Z"/><path d="M12 19v3"/></svg>
+            <span id="toggle-balloon-text">Ver Bolo</span>
+        </button>
+    </nav>
+
+    <!-- Notificação discreta (substitui qualquer alert) -->
+    <div id="toast-msg" class="fixed top-14 left-1/2 -translate-x-1/2 z-50 px-4 py-2 rounded-full bg-zinc-900/90 border border-amber-400/50 text-amber-200 text-xs font-medium shadow-lg opacity-0 pointer-events-none transition-opacity duration-300 text-center max-w-[90vw]"></div>
+
+    <!-- Modal para visualizar uma foto ampliada ao tocar nela -->
+    <div id="photo-modal" onclick="this.classList.remove('open')">
+        <div class="relative max-w-sm w-full bg-zinc-900 p-2 rounded-2xl border border-amber-300/40 shadow-2xl" onclick="event.stopPropagation()">
+            <img id="modal-img" src="" alt="Foto ampliada" class="w-full h-auto max-h-[70vh] object-contain rounded-xl">
+            <button type="button" onclick="document.getElementById('photo-modal').classList.remove('open')" class="mt-2 w-full py-2 rounded-xl bg-amber-500/20 text-amber-200 text-sm font-medium border border-amber-400/30">
+                Fechar Foto
+            </button>
+        </div>
+    </div>
+
+    <script>
+        /**
+         * =========================================================================
+         * 1. FUNDO DE ESTRELAS PISCANTES E CONFETES
+         * =========================================================================
+         */
+        const canvas = document.getElementById('bg-canvas');
+        const ctx = canvas.getContext('2d');
+        let width = canvas.width = window.innerWidth;
+        let height = canvas.height = window.innerHeight;
+
+        let stars = [];
+        const numStars = Math.floor((width * height) / 3200);
+
+        function initStars() {
+            stars = [];
+            for (let i = 0; i < numStars; i++) {
+                stars.push({
+                    x: Math.random() * width,
+                    y: Math.random() * height,
+                    radius: Math.random() * 1.5 + 0.5,
+                    alpha: Math.random(),
+                    speed: Math.random() * 0.02 + 0.005,
+                    twinkleSpeed: Math.random() * 0.03 + 0.01
+                });
+            }
+        }
+
+        let confettiPieces = [];
+        function launchConfetti() {
+            confettiPieces = [];
+            const colors = ['#fde047', '#f59e0b', '#ffffff', '#fbbf24', '#fef08a'];
+            for (let i = 0; i < 70; i++) {
+                confettiPieces.push({
+                    x: width / 2 + (Math.random() - 0.5) * 80,
+                    y: height * 0.45,
+                    vx: (Math.random() - 0.5) * 8,
+                    vy: Math.random() * -7 - 2,
+                    size: Math.random() * 6 + 4,
+                    color: colors[Math.floor(Math.random() * colors.length)],
+                    rot: Math.random() * 360,
+                    vrot: (Math.random() - 0.5) * 10,
+                    gravity: 0.18,
+                    opacity: 1
+                });
+            }
+        }
+
+        function renderCanvas() {
+            ctx.clearRect(0, 0, width, height);
+
+            // Desenha estrelas piscantes no fundo preto
+            for (let s of stars) {
+                s.alpha += Math.sin(Date.now() * s.speed) * 0.02;
+                if (s.alpha < 0.1) s.alpha = 0.1;
+                if (s.alpha > 1) s.alpha = 1;
+
+                ctx.beginPath();
+                ctx.arc(s.x, s.y, s.radius, 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(255, 255, 255, ${s.alpha})`;
+                ctx.fill();
+            }
+
+            // Atualiza e desenha confetes dourados se houver
+            if (confettiPieces.length > 0) {
+                for (let c of confettiPieces) {
+                    c.x += c.vx;
+                    c.y += c.vy;
+                    c.vy += c.gravity;
+                    c.rot += c.vrot;
+                    c.opacity -= 0.003;
+
+                    ctx.save();
+                    ctx.translate(c.x, c.y);
+                    ctx.rotate((c.rot * Math.PI) / 180);
+                    ctx.fillStyle = c.color;
+                    ctx.globalAlpha = Math.max(0, c.opacity);
+                    ctx.fillRect(-c.size / 2, -c.size / 2, c.size, c.size * 0.6);
+                    ctx.restore();
+                }
+                confettiPieces = confettiPieces.filter(c => c.opacity > 0 && c.y < height + 20);
+            }
+
+            requestAnimationFrame(renderCanvas);
+        }
+
+        /**
+         * =========================================================================
+         * 2. GALERIA DE FOTOS DE VOCÊS DOIS (COM FALLBACK INTELIGENTE)
+         * =========================================================================
+         */
+        function generateDefaultPhotos() {
+            // Lista com fotos locais e links de alta qualidade de fallback caso abra sem os arquivos na mesma pasta
+            const localPhotos = [
+                'Screenshot_20230901-232553_Instagram-EDIT.jpg',
+                'IMG-20240116-WA0007-EDIT.jpg',
+                'IMG-20240703-WA0014.jpg',
+                'IMG-20240914-WA0031-EDIT.jpg',
+                '20250129_012811-EDIT.jpg',
+                'IMG-20230528-WA0015.jpeg'
+            ];
+            
+            const fallbackPhotos = [
+                'https://images.unsplash.com/photo-1544717305-2782549b5136?q=80&w=600&auto=format&fit=crop',
+                'https://images.unsplash.com/photo-1506869782312-1ea656e29789?q=80&w=600&auto=format&fit=crop',
+                'https://images.unsplash.com/photo-1516627145497-ae6968895b74?q=80&w=600&auto=format&fit=crop',
+                'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?q=80&w=600&auto=format&fit=crop',
+                'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?q=80&w=600&auto=format&fit=crop',
+                'https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?q=80&w=600&auto=format&fit=crop'
+            ];
+
+            return localPhotos;
+        }
+
+        let activePhotos = generateDefaultPhotos();
+
+        /**
+         * =========================================================================
+         * 3. ANIMAÇÃO DE FOTOS GRANDES PASSANDO UMA A UMA E SE MOLDANDO EM BOLO
+         * =========================================================================
+         */
+        const morphViewport = document.getElementById('morph-viewport');
+        const orbitContainer = document.getElementById('orbit-container');
+        const cakePlate = document.getElementById('cake-plate');
+        const candleWrapper = document.getElementById('candle-wrapper');
+        const balloonStage = document.getElementById('balloon-stage');
+        const headerTitle = document.getElementById('header-title');
+        const toggleBalloonText = document.getElementById('toggle-balloon-text');
+
+        let animationTimers = [];
+        let flowAnimFrameId = null;
+        let orbitAnimFrameId = null;
+        let balloonVisible = false;
+
+        function clearAnimationTimers() {
+            animationTimers.forEach(t => clearTimeout(t));
+            animationTimers = [];
+            if (flowAnimFrameId) {
+                cancelAnimationFrame(flowAnimFrameId);
+                flowAnimFrameId = null;
+            }
+            if (orbitAnimFrameId) {
+                cancelAnimationFrame(orbitAnimFrameId);
+                orbitAnimFrameId = null;
+            }
+        }
+
+        function easeInOutCubic(t) {
+            return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+        }
+
+        function lerp(a, b, t) {
+            return a + (b - a) * t;
+        }
+
+        /**
+         * Gera o polígono (clip-path) que interpola suavemente de um retângulo
+         * inteiro (0% a 100%) até a silhueta exata de um bolo de 3 andares,
+         * fazendo os cantos/pontas da foto irem sendo cortados e moldados.
+         */
+        function getCakeMorphPolygon(morphFactor) {
+            const m = morphFactor;
+
+            // Topo do 3º andar (estreito: 26% a 74%, altura: 6% a 36%)
+            const t3Top = lerp(0, 6, m);
+            const t3Bot = lerp(0, 36, m);
+            const t3Left = lerp(0, 26, m);
+            const t3Right = lerp(100, 74, m);
+
+            // 2º andar (médio: 14% a 86%, altura: 36% a 68%)
+            const t2Bot = lerp(50, 68, m);
+            const t2Left = lerp(0, 14, m);
+            const t2Right = lerp(100, 86, m);
+
+            // 1º andar / Base (largo: 3% a 97%, altura: 68% a 98%)
+            const t1Bot = lerp(100, 98, m);
+            const t1Left = lerp(0, 3, m);
+            const t1Right = lerp(100, 97, m);
+
+            return `polygon(
+                ${t3Left.toFixed(1)}% ${t3Top.toFixed(1)}%,
+                ${t3Right.toFixed(1)}% ${t3Top.toFixed(1)}%,
+                ${t3Right.toFixed(1)}% ${t3Bot.toFixed(1)}%,
+                ${t2Right.toFixed(1)}% ${t3Bot.toFixed(1)}%,
+                ${t2Right.toFixed(1)}% ${t2Bot.toFixed(1)}%,
+                ${t1Right.toFixed(1)}% ${t2Bot.toFixed(1)}%,
+                ${t1Right.toFixed(1)}% ${t1Bot.toFixed(1)}%,
+                ${t1Left.toFixed(1)}% ${t1Bot.toFixed(1)}%,
+                ${t1Left.toFixed(1)}% ${t2Bot.toFixed(1)}%,
+                ${t2Left.toFixed(1)}% ${t2Bot.toFixed(1)}%,
+                ${t2Left.toFixed(1)}% ${t3Bot.toFixed(1)}%,
+                ${t3Left.toFixed(1)}% ${t3Bot.toFixed(1)}%
+            )`;
+        }
+
+        /**
+         * Executa a animação onde fotos grandes passam uma a uma em sequência,
+         * repetindo/alternando enquanto suas pontas vão sendo esculpidas em
+         * degraus até se transformarem no bolo final.
+         */
+        function buildAndAnimateCake() {
+            clearAnimationTimers();
+            morphViewport.innerHTML = '';
+            orbitContainer.innerHTML = '';
+            orbitContainer.classList.remove('visible');
+            cakePlate.classList.remove('visible');
+            candleWrapper.classList.remove('visible');
+            balloonStage.classList.remove('rise');
+            headerTitle.classList.remove('visible');
+            balloonVisible = false;
+            toggleBalloonText.textContent = 'Ver Bolo';
+
+            const vw = window.innerWidth;
+            const vh = window.innerHeight;
+            const isMobile = vw < 640;
+
+            // Define a posição e tamanho do palco do bolo na metade inferior (deixando topo livre para o balão branco)
+            const cakeWidth = Math.min(vw * 0.84, 340);
+            const cakeHeight = Math.min(vh * 0.42, 310);
+            const viewportCenterY = isMobile ? vh * 0.64 : vh * 0.63;
+
+            morphViewport.style.width = `${cakeWidth}px`;
+            morphViewport.style.height = `${cakeHeight}px`;
+            morphViewport.style.top = `${viewportCenterY}px`;
+
+            const cakeBottomY = viewportCenterY + cakeHeight * 0.48;
+            const cakeTopY = viewportCenterY - cakeHeight * 0.44;
+            const centerX = vw / 2;
+
+            // Configura o prato logo abaixo da base do bolo
+            const plateWidth = cakeWidth * 1.04;
+            cakePlate.style.width = `${plateWidth}px`;
+            cakePlate.style.left = `${centerX - plateWidth / 2}px`;
+            cakePlate.style.top = `${cakeBottomY + 4}px`;
+            // Posiciona o conjunto de 3 velinhas centralizado no topo do 3º andar
+            const candleHeight = 60;
+            candleWrapper.style.left = `${centerX}px`;
+            candleWrapper.style.top = `${cakeTopY - candleHeight + 4}px`;
+            candleWrapper.style.marginLeft = '-32px';
+
+            // Mostra o título sutil
+            animationTimers.push(setTimeout(() => {
+                headerTitle.classList.add('visible');
+            }, 150));
+
+            // Monta uma sequência maior de 18 passagens rápidas de fotos (repetindo a lista se necessário)
+            const totalSlides = Math.max(18, activePhotos.length * 2);
+            const slideSequence = [];
+            for (let i = 0; i < totalSlides; i++) {
+                slideSequence.push(activePhotos[i % activePhotos.length]);
+            }
+
+            // Cria os elementos DOM de cada foto grande que passará na animação
+            const slideEls = slideSequence.map((src, idx) => {
+                const frame = document.createElement('div');
+                frame.className = 'morph-photo-frame';
+                frame.style.opacity = '0';
+                frame.style.zIndex = `${10 + idx}`;
+
+                const img = document.createElement('img');
+                img.src = src;
+                img.alt = 'Foto especial';
+                
+                // Tratamento caso o arquivo local não seja encontrado no mesmo diretório
+                img.onerror = function() {
+                    const fallbacks = [
+                        'https://images.unsplash.com/photo-1544717305-2782549b5136?q=80&w=600&auto=format&fit=crop',
+                        'https://images.unsplash.com/photo-1506869782312-1ea656e29789?q=80&w=600&auto=format&fit=crop',
+                        'https://images.unsplash.com/photo-1516627145497-ae6968895b74?q=80&w=600&auto=format&fit=crop',
+                        'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?q=80&w=600&auto=format&fit=crop',
+                        'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?q=80&w=600&auto=format&fit=crop',
+                        'https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?q=80&w=600&auto=format&fit=crop'
+                    ];
+                    this.src = fallbacks[Math.floor(Math.random() * fallbacks.length)];
+                };
+
+                frame.appendChild(img);
+
+                // Se for a última foto (que fica como o bolo final), adiciona cobertura branca e detalhes de glacê
+                if (idx === slideSequence.length - 1) {
+                    const whiteFrosting = document.createElement('div');
+                    whiteFrosting.className = 'white-cake-frosting';
+                    frame.appendChild(whiteFrosting);
+
+                    const frostingSvg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+                    frostingSvg.setAttribute('viewBox', '0 0 100 100');
+                    frostingSvg.setAttribute('preserveAspectRatio', 'none');
+                    frostingSvg.classList.add('cake-tier-lines');
+                    frostingSvg.innerHTML = `
+                        <polygon points="26,6 74,6 74,36 86,36 86,68 97,68 97,98 3,98 3,68 14,68 14,36 26,36"
+                            fill="none" stroke="rgba(253,230,138,0.95)" stroke-width="1.4" stroke-linejoin="round"/>
+                        <line x1="26" y1="36" x2="74" y2="36" stroke="rgba(245,158,11,0.85)" stroke-width="1.6"/>
+                        <line x1="14" y1="68" x2="86" y2="68" stroke="rgba(245,158,11,0.85)" stroke-width="1.6"/>
+                    `;
+                    frame.appendChild(frostingSvg);
+                }
+
+                morphViewport.appendChild(frame);
+                return frame;
+            });
+
+            // Parâmetros de tempo mais rápidos para passar mais fotos com fluidez
+            const slideInterval = 260;
+            const slideHold = 360;
+            const totalDuration = (slideSequence.length - 1) * slideInterval + slideHold;
+            const animStart = performance.now();
+
+            function animatePhotoMorph(now) {
+                const elapsed = now - animStart;
+                const overallProgress = Math.min(1, elapsed / totalDuration);
+
+                // Fator global de escultura: vai de 0 (foto retangular inteira) até 1 (bolo de 3 andares)
+                const rawMorph = Math.max(0, Math.min(1, (overallProgress - 0.12) / 0.80));
+                const morphFactor = easeInOutCubic(rawMorph);
+                const currentClip = getCakeMorphPolygon(morphFactor);
+                const currentRadius = lerp(18, 2, morphFactor);
+
+                for (let i = 0; i < slideEls.length; i++) {
+                    const el = slideEls[i];
+                    const isLast = (i === slideEls.length - 1);
+                    const startT = i * slideInterval;
+                    const endT = startT + slideHold;
+
+                    if (elapsed < startT) {
+                        el.style.opacity = '0';
+                        continue;
+                    }
+
+                    if (!isLast && elapsed > endT + 180) {
+                        el.style.opacity = '0';
+                        continue;
+                    }
+
+                    const localP = Math.min(1, (elapsed - startT) / slideHold);
+                    const easeLocal = easeInOutCubic(localP);
+
+                    const enterOffset = isLast
+                        ? (1 - easeLocal) * 60
+                        : (1 - easeLocal) * 90 - Math.max(0, (elapsed - endT) / 180) * 90;
+
+                    const scale = 1.08 - 0.08 * easeLocal;
+
+                    let opacity = 1;
+                    if (localP < 0.25) {
+                        opacity = localP / 0.25;
+                    } else if (!isLast && elapsed > endT) {
+                        opacity = Math.max(0, 1 - (elapsed - endT) / 180);
+                    }
+
+                    el.style.opacity = opacity.toFixed(2);
+                    el.style.clipPath = currentClip;
+                    el.style.webkitClipPath = currentClip;
+                    el.style.borderRadius = `${currentRadius.toFixed(1)}px`;
+                    el.style.transform = `translate3d(${enterOffset.toFixed(1)}px, 0, 0) scale(${scale.toFixed(3)})`;
+                }
+
+                if (overallProgress < 1) {
+                    flowAnimFrameId = requestAnimationFrame(animatePhotoMorph);
+                } else {
+                    flowAnimFrameId = null;
+                    slideEls.forEach((el, idx) => {
+                        if (idx < slideEls.length - 1) {
+                            el.style.opacity = '0';
+                        } else {
+                            el.style.opacity = '1';
+                            el.style.transform = 'translate3d(0, 0, 0) scale(1)';
+                            const whiteCake = el.querySelector('.white-cake-frosting');
+                            if (whiteCake) whiteCake.classList.add('visible');
+                            const lines = el.querySelector('.cake-tier-lines');
+                            if (lines) lines.classList.add('visible');
+                        }
+                    });
+                    startOrbitingPhotos(centerX, viewportCenterY, cakeWidth, cakeHeight, isMobile);
+                }
+            }
+
+            /**
+             * Faz as fotos girarem em uma órbita 3D suave ao redor do bolo branco formado,
+             * desaparecendo ao passar por trás do bolo e reaparecendo do outro lado na frente.
+             */
+            function startOrbitingPhotos(cx, cy, cWidth, cHeight, mobile) {
+                orbitContainer.innerHTML = '';
+                const orbitCount = Math.min(8, Math.max(5, activePhotos.length));
+                const photoSize = mobile ? 82 : 102;
+                const radiusX = Math.min(vw * 0.42, cWidth * 0.64);
+                const radiusY = cHeight * 0.24;
+
+                const orbitItems = [];
+                for (let i = 0; i < orbitCount; i++) {
+                    const src = activePhotos[i % activePhotos.length];
+                    const item = document.createElement('div');
+                    item.className = 'orbit-photo-item';
+
+                    const img = document.createElement('img');
+                img.src = src;
+                img.alt = 'Foto girando ao redor do bolo';
+                img.onerror = function() {
+                    this.src = 'https://images.unsplash.com/photo-1544717305-2782549b5136?q=80&w=600&auto=format&fit=crop';
+                };
+                item.appendChild(img);
+
+                item.addEventListener('click', () => {
+                        document.getElementById('modal-img').src = src;
+                        document.getElementById('photo-modal').classList.add('open');
+                    });
+
+                    orbitContainer.appendChild(item);
+                    orbitItems.push({
+                        el: item,
+                        baseAngle: (i / orbitCount) * Math.PI * 2
+                    });
+                }
+
+                orbitContainer.classList.add('visible');
+                const orbitStart = performance.now();
+
+                function updateOrbit(now) {
+                    const elapsedSec = (now - orbitStart) / 1000;
+                    const speed = 0.72; // radianos por segundo
+
+                    for (let i = 0; i < orbitItems.length; i++) {
+                        const obj = orbitItems[i];
+                        const angle = obj.baseAngle + elapsedSec * speed;
+                        const cosA = Math.cos(angle);
+                        const sinA = Math.sin(angle);
+
+                        const x = cx + cosA * radiusX - photoSize / 2;
+                        const y = cy + sinA * radiusY - photoSize / 2 + 8;
+
+                        // Profundidade 3D: fotos na frente (sinA >= 0) ficam grandes e visíveis;
+                        // quando passam por trás do bolo (sinA < 0), somem suavemente e reaparecem do outro lado.
+                        const depth = (sinA + 1) / 2; // 0 (trás) a 1 (frente)
+                        const scale = 0.65 + depth * 0.45;
+                        const zIndex = sinA >= 0 ? 28 : 15;
+
+                        let opacity = 0;
+                        if (sinA >= -0.15) {
+                            // Transição suave nas bordas laterais do bolo para sumir atrás e surgir na frente
+                            const frontVisibility = Math.min(1, (sinA + 0.15) / 0.35);
+                            opacity = frontVisibility;
+                        }
+
+                        obj.el.style.transform = `translate3d(${x.toFixed(1)}px, ${y.toFixed(1)}px, 0) scale(${scale.toFixed(3)})`;
+                        obj.el.style.opacity = opacity.toFixed(2);
+                        obj.el.style.zIndex = `${zIndex}`;
+                        obj.el.style.pointerEvents = opacity > 0.35 ? 'auto' : 'none';
+                    }
+
+                    orbitAnimFrameId = requestAnimationFrame(updateOrbit);
+                }
+
+                orbitAnimFrameId = requestAnimationFrame(updateOrbit);
+            }
+
+            flowAnimFrameId = requestAnimationFrame(animatePhotoMorph);
+
+            // Exibe o prato do bolo conforme a base vai se formando
+            animationTimers.push(setTimeout(() => {
+                cakePlate.classList.add('visible');
+            }, totalDuration * 0.65));
+
+            // Acende a vela no topo quando as fotos terminam de se moldar no bolo
+            animationTimers.push(setTimeout(() => {
+                candleWrapper.classList.add('visible');
+            }, totalDuration + 100));
+
+            // Sobe o balão branco simples acima do bolo com a mensagem completa
+            animationTimers.push(setTimeout(() => {
+                balloonStage.classList.add('rise');
+                balloonVisible = true;
+                toggleBalloonText.textContent = 'Ocultar Balão';
+                launchConfetti();
+            }, totalDuration + 750));
+        }
+
+        /**
+         * =========================================================================
+         * 4. INTERAÇÕES: UPLOAD DE FOTOS DO USUÁRIO, REPETIR E ALTERNAR VISÃO
+         * =========================================================================
+         */
+        function showToast(text) {
+            const toast = document.getElementById('toast-msg');
+            toast.textContent = text;
+            toast.style.opacity = '1';
+            setTimeout(() => {
+                toast.style.opacity = '0';
+            }, 2800);
+        }
+
+        // Upload opcional de fotos da galeria do celular ou PC
+        document.getElementById('photo-upload').addEventListener('change', function (e) {
+            const files = Array.from(e.target.files || []);
+            if (files.length === 0) return;
+
+            const objectUrls = files.map(file => URL.createObjectURL(file));
+            activePhotos = objectUrls;
+            document.getElementById('upload-label').textContent = `${files.length} Foto${files.length > 1 ? 's' : ''}`;
+            showToast(`Montando o bolo com ${files.length} foto(s) selecionada(s)!`);
+            buildAndAnimateCake();
+        });
+
+        // Botão Repetir animação
+        document.getElementById('btn-replay').addEventListener('click', () => {
+            buildAndAnimateCake();
+        });
+
+        // Botão para alternar visibilidade do balão branco
+        document.getElementById('btn-toggle-balloon').addEventListener('click', () => {
+            if (balloonVisible) {
+                balloonStage.classList.remove('rise');
+                balloonVisible = false;
+                toggleBalloonText.textContent = 'Ver Balão';
+            } else {
+                balloonStage.classList.add('rise');
+                balloonVisible = true;
+                toggleBalloonText.textContent = 'Ocultar Balão';
+                launchConfetti();
+            }
+        });
+
+        // Recalcula estrela e layout ao girar o celular ou redimensionar a janela
+        let resizeTimeout;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimeout);
+            resizeTimeout = setTimeout(() => {
+                width = canvas.width = window.innerWidth;
+                height = canvas.height = window.innerHeight;
+                initStars();
+                buildAndAnimateCake();
+            }, 250);
+        });
+
+        // Inicialização ao carregar a página
+        window.addEventListener('load', () => {
+            initStars();
+            renderCanvas();
+            buildAndAnimateCake();
+        });
+    </script>
+</body>
+</html>
